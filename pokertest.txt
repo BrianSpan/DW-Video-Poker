@@ -1,0 +1,43 @@
+5H 8D 6D 7S 3H KD 8H 2D TH AD  ... outside straight, no wild - discard #5
+JH 3D QD KS TH AD 8H 2D 3H AD  ... outside straight (royal), no A, no wild - discard #2
+jh ad QD KS 3H KD 8H 2D 3H AD  ... outside straight (royal), with A, no wild - discard #5
+5h 6h 7h 2d 3c 9H 8D 6D 7S 3H  ... outside straight, 1 wild, discard #5
+6d 8d Kd 2C 3D 6H 3H 6D 4H 7H  ... flush, 1 wild
+5h 6h 9h 2d 3c 9H 8D 6D 7S 3H  ... inside straight, 1 wild - discard #5
+5h 6h 8h 2d 3c 7H 8D 6D 7S 3H  ... outside straight, 1 wild - discard #5
+3H 9D 3D 3C 3S 5H 8D 6D 7S 3H  ... 4 of kind, no wild - discard #2
+6H 3H 6D 4H 7H 5H 2D 6C 3S JH  ... possible straight flush, no wild - discard #3
+JC KC 3D TC QC AC 3H 2D 9C 3S  ... possible royal flush, no wild - discard #3
+5C 2D 5D AC 9C 9D 5H 2C AH KS  ... three of a kind. 1 wild, discard #4,5
+4D TD 3H AD 8D 3D 2H JH TH AS  ... possible flush, no wild - discard #3
+4D 3D 4H TC 8H QS 3H 9D JC JH  ... pair,no wild - discard #2,4,5
+TS 6S QC 6C TH TC 9D 5C 5D KD  ... 2 pair, no wild, discard #2,3,4 (slightly better odds than only discard Q)
+6D AS TS JS 9H QS KS QH 2D JH  ... possible royal flush,no wilds, discard #1,5
+2H 8S 7S 4d 2D 2C TS 6S 9C 6H  ... possible straight flush, 2 wilds, discard #4
+AD KC JD 2D 2S 5H 8D 6D 7S 3H  ... possible wild royal flush, 2 wild, discard #2
+AD 3C JD 2D 2S 5H 8D 6D 7S 3H  ... possible wild royal flush, 2 wild, discard #2
+2H 6C 7C KH 5C AD QS TH JD 8S  ... possible flush, 1 wild,discard #4
+AD 3C AH 2D 2S 5H 8D 6D 7S 3H  ... 4 of a kind, 2 wild,discard #2
+2D 2C 3S 2H 6S AS 4D 3C 7d 3c  ... 4 of a kind, 3 wilds, discard #3,5
+5H 4D 6D 7S JH KD 8H 2D TH AD  ... outside straight, no wild - discard #4
+JD 2D JC 4D JS JH TH 9D KS 6H  ... 4 of a kind, 1 wild, discard #4
+KC 9H 8D 5H 7H 4H QC 3D 7C AS  ... possible flush, no wild, discard #1,3
+5h 6h kd 2d 3c 9H 8D 6D 7S 3H  ... possible straight flush, 1 wild, discard #3
+Th 9c Qh 2d 3c 9H 8D 6D 7S 3H  ... 3 cards to wild royal flush, 1 wild, discard #2,5
+Th AH 6H 2d 3c 9H 8D 6D 7S 3H  ... 3 cards to wild royal flush, 1 wild, discard #3,5
+AH 2H AC 8H JS 5H 8D 6D 7S 3H  ... 3 of a kind, 1 wild, discard #4,5
+TS 7D 5D 6C 2C AD 4C 7H TS 2D  ... outside straight, 1 wild,discard #1
+TD 7D 6D 6C 2C AD 4C 7H TS 2D  ... 3of a kind, 1 wild, discard #1,2
+6d 8d 6h 2D 8c 6H 3H 6D 4H 7H  ... full house, 1 wild
+2D JD AD KD 3S JC KC 3D TC QC  ... possible royal flush, 1 wild, discard #5
+2D JD AD KD AS JC KC 3D TC QC  ... possible royal flush, 1 wild, discard #5
+9D 3H 9H 9C 9S 2D 8S 6S 9C 6H  ... 4 of a kind, no wild, discard #2
+9D 3H 9H 2C 9S 2D 8S 6S 9C 6H  ... 4 of a kind, no wild, discard #2
+2C AS AH 7D 9S 2C 2H KS QS JS  ... 3 of a kind, 1 wild, discard #4,5
+AD 4C 7H TS 2D 2S 8S 6S 9C 6H  ... junk, discard #1,2,3,4
+8s kd kc ah qc 6d 8d Kd 2C 3D  ... pair, discard #1,#4,#5
+JC AD KS TC 9S 5C 9D AC 6C 2D  ... possible inside straight, no wild, discard #5
+JH TH 9D KS 6H 5C 9D AC 6C 2D  ... possible straight, no wild, discard #5
+2C 2H KS QS JS 2D 2C JD QD KD  ... royal flush, 2 wilds, discard nothing
+ 
+
