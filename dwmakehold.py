@@ -1,5 +1,6 @@
 from dwconstants import *
 from dwnamehands import *
+from collections import Counter
 
 ############
 # Determine which cards to hold based on strategy of how many wild cards
@@ -274,39 +275,30 @@ def partial_w0_4toinsidestraight(handinfo)->bool:#4 to an inside straight
 ######
 def partial_w1_4toroyalflush(handinfo)->bool:#1 wild, all the suited 2 or more royal
     #We previously check WRF (Wild -Royal-Royal-Royal-Royal)
-    #WRF with only 1 wild is Wild-Royal-Royal-Royal-unrelated
+    #WRF with only 1 wild is Wild-Royal-Royal-Royal-unrelated (royals same suit)
     out=False
-    if handinfo.wilds==1:
-        #make a temp hand of only royals
-        temproyalhand=[(rank,suit) for rank,suit in handinfo.nowildhand if rank in ROYAL]
-        #1 wild so there must be 3 royals, all different, only 1 suit
-        if len(temproyalhand)==3 \
-           and len(set([rank for rank,suit in temproyalhand]))==3 \
-           and len(set([suit for rank,suit in temproyalhand]))==1:
-            tempsuit=[suit for rank,suit in temproyalhand]
-            counttempsuit={suit:tempsuit.count(suit) for suit in set(tempsuit)}
-            #royalsintemp=len(temproyalhand)
-            if len(set(tempsuit))==1: #flush
-                #find outlier if any - this will be 4 to WRF
-                out=True
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                                   for rank,suit in handinfo.hand
-                                   if rank!=WILD and not(rank in ROYAL)]
-        elif len(temproyalhand)==4:
-            #there is royal card out of suit
-            #all royal but unrelated is different suit
-            #what's the distrubution of suits
-            counttempsuit={suit: sum(1 for (r1,s1) in temproyalhand if s1==suit)
-                           for suit in set(suit for (rank,suit) in temproyalhand)}
-            distribsuit=counttempsuit.values()
-            if 3 in distribsuit: #we want 3 so throw out outlier
-                out=True
-                badsuit=next(suit for suit,count in counttempsuit.items() if count==1)
-                #badsuit=list(counttempsuit.keys())[list(counttempsuit.values()).index(1)]
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                                   for rank,suit in handinfo.hand
-                                   if rank in ROYAL and suit==badsuit]
-    return(out)
+    #examining the version on the hand with no wilds,
+    #must have 3 or 4 Royals
+    #if 3, remove unrelated and check all are same suit
+    #if 4, unrelated is Royal but different suit
+    countroyal=sum(rank in ROYAL for (rank,suit) in handinfo.nowildhand)
+    if countroyal==3:
+        temphandroyalsinhand=[suit for (rank,suit) in handinfo.nowildhand if rank in ROYAL]
+        if len(set(temphandroyalsinhand))==1:
+            out=True
+            handinfo.discards=[handinfo.hand.index((rank,suit))
+                               for rank,suit in handinfo.hand
+                               if rank!=WILD and not(rank in ROYAL)]
+    elif countroyal==4:
+        #find which is non-matching suit
+        suitcount={suit:handinfo.allsuit.count(suit) for rank,suit in handinfo.nowildhand}
+        goodsuit=next((suit for suit,cnt in suitcount.items() if cnt==3),None)
+        if goodsuit:
+            out=True
+            handinfo.discards=[handinfo.hand.index((rank,suit))
+                               for rank,suit in handinfo.hand
+                               if rank!=WILD and suit!=goodsuit]
+    return(out)    
 
 
 def partial_w1_4tooutsidestraightflush(handinfo)->bool:
@@ -424,31 +416,57 @@ def partial_w1_3tostraightflush(handinfo)->bool: #3 to a straight flush with 2 c
 # wilds=2
 #
 ######
-def partial_w2_4towildroyalflush(handinfo):
-    #2W + 2Royal(suited) = 4 to wild royal flush
+def partial_w2_4towildroyalflush(handinfo): #2W + 2Royal(suited) = 4 to wild royal flush
+    """
+    Check if 2 deuces + 2 royals (suited) = 4 to a Wild Royal Flush.
+
+    Assumes:
+        hand has already been excluded to have only 2 wilds
+
+    Input:
+        handinfo - dataclass containing handinfo
+
+    Return:
+      bool if the pattern is satisfied
+
+    Changes:
+        handinfo.discards - position(0-based) of non-pattern matching card
+    """
+
     out=False
+    #partial hand containing only royals
     temphand=[(rank,suit) for rank,suit in handinfo.nowildhand if rank in ROYAL]
+
+    #how many royals are there?
+    #Case 1: Exactly 2 royals, check if same suit
     if len(temphand)==2: #how many royals are there?
         #same suit? then drop the outlier
         goodsuit=list(set([suit for (rank,suit)in temphand]))
-        if len(goodsuit)==1:
+        if len(goodsuit)==1: #only 1 suit
             out=True
             handinfo.discards=[cardpos
-                               for cardpos in range(5)
-                               if (rank:=handinfo.hand[cardpos][0])!=WILD
+                               for cardpos, (rank, suit) in enumerate(handinfo.hand)
+                               if rank != WILD
+                               #for cardpos in range(5)
+                               #if (rank:=handinfo.hand[cardpos][0])!=WILD
                                and not rank in ROYAL]
+
+    # Case 2: Exactly 3 royals, 2 in suit and 1 outlier
     elif len(temphand)==3: #if 3 royals, then how many suits?
-        suits=[suit for rank,suit in temphand]
-        countsuits={suit:suits.count(suit) for suit in set(suits)}
+        #suits=[suit for rank,suit in temphand]
+        #countsuits={suit:suits.count(suit) for suit in set(suits)}
+        countsuits = Counter(suit for rank,suit in temphand)
         if len(countsuits)==2: #if 2 suits, remove the outlier
             out=True
             #remove the outlier
             badsuit=next(suit for suit,count in countsuits.items() if count==1)
             #badsuit=list(counttsuits.keys())[list(counttsuits.values()).index(1)]
             handinfo.discards=[cardpos
-                               for cardpos in range(5)
-                               if (rank:=handinfo.hand[cardpos][0])!=WILD
-                               and (suit:=handinfo.hand[cardpos][1])==badsuit
+                               #for cardpos in range(5)
+                               for cardpos, (rank, suit) in enumerate(handinfo.hand)
+                               #if (rank:=handinfo.hand[cardpos][0])!=WILD
+                               #and (suit:=handinfo.hand[cardpos][1])==badsuit
+                               if rank != WILD and suit == badsuit
                                ]
     return(out)
 
