@@ -3,7 +3,7 @@ from dwnamehands import *
 
 #Create info about the hand
 class DWpokerinfo:
-    def __init__(self, hand):
+    def __init__(self, hand: list[tuple[str,str]])->None:
         """
         Initializes an object to hold information on a poker hand including wildcards.
 
@@ -13,7 +13,7 @@ class DWpokerinfo:
         """
         
         #keep track of discards during swapping
-        self.discards = []
+        self.discards: list[int] = []
         # original hand
         self.hand = hand
 

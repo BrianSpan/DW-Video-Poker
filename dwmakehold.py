@@ -416,7 +416,7 @@ def partial_w1_3tostraightflush(handinfo)->bool: #3 to a straight flush with 2 c
 # wilds=2
 #
 ######
-def partial_w2_4towildroyalflush(handinfo): #2W + 2Royal(suited) = 4 to wild royal flush
+def partial_w2_4towildroyalflush(handinfo: "DWpokerinfo")->bool: #2W + 2Royal(suited) = 4 to wild royal flush
     """
     Check if 2 deuces + 2 royals (suited) = 4 to a Wild Royal Flush.
 
@@ -434,6 +434,7 @@ def partial_w2_4towildroyalflush(handinfo): #2W + 2Royal(suited) = 4 to wild roy
     """
 
     out=False
+
     #partial hand containing only royals
     temphand=[(rank,suit) for rank,suit in handinfo.nowildhand if rank in ROYAL]
 
