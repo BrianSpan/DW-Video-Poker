@@ -122,6 +122,31 @@ def makehold(handinfo)->list[bool]:
     out=[not(cardindex in handinfo.discards) for cardindex in range(5)]    
     return(out)
 
+###########
+#
+# Helper function
+#
+##########
+def creatediscard( hand:list[tuple[str,str]], cond:callable)->list[int]:
+    """
+    Return list of dicard in order (0-based)
+    based on not fitting pattern
+    
+    Args:
+    hand:The original hand to choose from
+    condition: lambda function
+        Args: rank: rank of card
+              suit:suit of card
+        Output: True if discard      
+    Output:
+    list of positions (0-based) that can be discarded
+    """
+    #ex: creatediscards(handinfo.hand, lambda rank,suit: rank!=WILD and rank not in ROYAL)
+    #ex: hand.discards=creatediscards(handinfo.hand, lambda rank,suit: rank!=WILD and suit==badsuit)
+    out=[pos for pos,(rank,suit) in enumerate(hand) if cond(rank,suit)]
+    
+    return(out)    
+
 
 ##########
 # Partial hand functions
@@ -133,29 +158,39 @@ def makehold(handinfo)->list[bool]:
 # wilds=0
 #
 ##########
-def partial_w0_4ofroyalflush(handinfo)->bool:
+def partial_w0_4ofroyalflush(handinfo: "DWpokerinfo") -> bool:
+    """
+    Check if a hand with 0 wilds contains exactly 4 cards to a Royal Flush.
+    Record discards in handinfo.
+
+    Assumes:
+        0 wild cards
+
+    Args:
+        handinfo (DWpokerinfo): Object with poker hand details.
+
+    Affects:
+        handinfo.discards
+
+    Returns:
+        bool:  if the hand qualifies as 4-to-a-Royal-Flush
+    """
     out=False
-        
-    if handinfo.wilds==0:
-        #make a hand to see if there are royals
-        temphand=[(rank,suit)
-                  for rank,suit in handinfo.hand
-                  if rank in ROYAL]
-        if len(temphand)==4:#are all the royals same suit
-            tempsuit=[suit for rank,suit in temphand]
-            if len(set(tempsuit))==1:
-                out=True
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                          for rank,suit in handinfo.hand
-                          if not(rank in ROYAL)]
-        elif len(temphand)==5:#find the nonsuited royal
-            if 4 in handinfo.countsuit.values():
-                out=True
-                badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-                #badsuit=list(handinfo.countsuit.keys())[list(handinfo.countsuit.values()).index(1)]
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                          for rank,suit in handinfo.hand
-                          if suit==badsuit]
+
+    #make a royal-only hand
+    temphand=[(rank,suit) for rank,suit in handinfo.hand if rank in ROYAL]
+
+    #case 1: 4 royals, all same suit, so outlier is discarded
+    if len(temphand)==4 and len({suit for rank, suit in temphand}) == 1: 
+        out=True
+        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if rank not in ROYAL]
+
+    #case 2: all royals and 4 are same, find the outlying suit           
+    elif len(temphand)==5 and 4 in handinfo.countsuit.values():
+        badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
+        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if suit == badsuit]
+        out=True
+
     return(out)
 
 def partial_w0_4ofstraightflush(handinfo)->bool: #Four-card straight flush (open-ended or with a gap)
