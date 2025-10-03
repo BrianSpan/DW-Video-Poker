@@ -1,6 +1,7 @@
 from dwconstants import *
 from dwnamehands import *
 from collections import Counter
+from dwpartial import *
 
 ############
 # Determine which cards to hold based on strategy of how many wild cards
@@ -92,7 +93,8 @@ def makehold(handinfo)->list[bool]:
         elif handinfo.handscore==STRAIGHTFLUSH:
             handinfo.discards=[]
         elif handinfo.handscore==FOURKIND:
-            badcard=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if handinfo.nowildranks.count(rank)==1][0]
+            #badcard=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if handinfo.nowildranks.count(rank)==1][0]
+            badcard=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if handinfo.nowildranks.count(rank)==1]
             handinfo.discards=[badcard]
         elif handinfo.handscore==FULLHOUSE:
             handinfo.discards=[]
@@ -104,17 +106,17 @@ def makehold(handinfo)->list[bool]:
             pass  #discards have already been calculated
         elif partial_w0_4ofstraightflush(handinfo): #4 to Straigth Flush  - doesnt specify isf or osf
             out=[not(i in handinfo.discards) for i in range(5)]
-        elif partial_w0_3toroyalflush(handinfo):#3 to a royal flush
+        elif partial_w0_3ofroyalflush(handinfo):#3 to a royal flush
             pass  #discards have already been calculated
-        elif partial_w0_4toflush(handinfo):#4 FL
+        elif partial_w0_4offlush(handinfo):#4 FL
             pass  #discards have already been calculated
         elif handinfo.handscore==TWOPAIR or handinfo.handscore==PAIRJACK or handinfo.handscore==PAIR:
             pass  #discards have already been calculated
-        elif partial_w0_4tooutsidestraight(handinfo):#4 to an outside straight
+        elif partial_w0_4ofoutsidestraight(handinfo):#4 to an outside straight
             pass  #discards have already been calculated
-        elif partial_w0_3tostraightflush(handinfo): #3 to straight flush
+        elif partial_w0_3ofstraightflush(handinfo): #3 to straight flush
             pass  #discards have already been calculated
-        elif partial_w0_4toinsidestraight(handinfo):#4 to an inside straight, except missing deuce
+        elif partial_w0_4ofinsidestraight(handinfo):#4 to an inside straight, except missing deuce
             pass  #discards have already been calculated
         else:#junk
             handinfo.discards=list(range(5)) #all 5
@@ -154,155 +156,6 @@ def creatediscard( hand:list[tuple[str,str]], cond:callable)->list[int]:
 # Recognize a pattern in partial hands
 #
 ##########
-#
-# wilds=0
-#
-##########
-def partial_w0_4ofroyalflush(handinfo: "DWpokerinfo") -> bool:
-    """
-    Check if a hand with 0 wilds contains exactly 4 cards to a Royal Flush.
-    Record discards in handinfo.
-
-    Assumes:
-        0 wild cards
-
-    Args:
-        handinfo (DWpokerinfo): Object with poker hand details.
-
-    Affects:
-        handinfo.discards
-
-    Returns:
-        bool:  if the hand qualifies as 4-to-a-Royal-Flush
-    """
-    out=False
-
-    #make a royal-only hand
-    temphand=[(rank,suit) for rank,suit in handinfo.hand if rank in ROYAL]
-
-    #case 1: 4 royals, all same suit, so outlier is discarded
-    if len(temphand)==4 and len({suit for rank, suit in temphand}) == 1: 
-        out=True
-        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if rank not in ROYAL]
-
-    #case 2: all royals and 4 are same, find the outlying suit           
-    elif len(temphand)==5 and 4 in handinfo.countsuit.values():
-        badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if suit == badsuit]
-        out=True
-
-    return(out)
-
-def partial_w0_4ofstraightflush(handinfo)->bool: #Four-card straight flush (open-ended or with a gap)
-    out=False
-    #we already test if flush so 4 will be same suit
-    if (handinfo.wilds==0) and (4 in handinfo.countsuit.values()): #4 in a flush
-        badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-        #badsuit=list(handinfo.countsuit.keys())[list(handinfo.countsuit.values()).index(1)]
-        temphandnum=[RANKLIST.index(rank) for rank,suit in handinfo.hand if suit!=badsuit]
-        mn=min(temphandnum)
-        mx=max(temphandnum)
-        if mx-mn<=4: #outside straight=3 different,inside straight=4 different
-            out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if suit==badsuit]
-    return(out)
-
-def partial_w0_3toroyalflush(handinfo)->bool:#3 to a royal flush
-    out=False
-    mxcountsuit=max(handinfo.countsuit.values())
-    if mxcountsuit>=3: #3 in flush
-        goodsuit=next(suit for suit,count in handinfo.countsuit.items() if count==mxcountsuit)
-        #goodsuit=list(handinfo.countsuit.keys())[list(handinfo.countsuit.values()).index(mxcountsuit)]
-        #is royal?
-        temphand=[(rank,suit) for rank,suit in handinfo.hand if rank in ROYAL and suit==goodsuit]
-        if len(temphand)==3:
-            out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if not((rank,suit) in temphand)]
-    return(out)
-
-
-def partial_w0_4toflush(handinfo)->bool:
-    out=False
-    if handinfo.wilds==0 and(4 in handinfo.countsuit.values()):
-        badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-        #badsuit=list(handinfo.countsuit.keys())[list(handinfo.countsuit.values()).index(1)]
-        out=True
-        handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if suit==badsuit]
-    return(out)
-
-def partial_w0_4tooutsidestraight(handinfo)->bool:# 4 to an outside straight
-    out=False
-    if handinfo.wilds==0:
-        #because A is usually ranked as low card,
-        #... we have to break out this exception for royal straight
-        if 'A' in handinfo.allrank:
-            temphand=[rank for rank in handinfo.allrank if rank in ROYAL]
-            #only way to have OUTSIDE rotal straight that includes A is to not have 10
-            if len(temphand)==4 and not('T' in temphand):
-                out=True
-                #find outlier
-                handinfo.discards=[handinfo.allrank.index(list(set(handinfo.allrank)-set(ROYAL))[0])]
-        else:
-            ranknumlist=[RANKLIST.index(rank) for rank in handinfo.allrank]
-            #if we remove one of the ends, is it straight?
-            mincardpos=ranknumlist.index(min(ranknumlist))
-            maxcardpos=ranknumlist.index(max(ranknumlist))
-            #outlier will be lower or higher than the rest
-            handwohi=ranknumlist.copy()
-            del handwohi[maxcardpos]
-            handwolo=ranknumlist.copy()
-            del handwolo[mincardpos]
-            #if we remove the highest, is it ost?
-            if len(set(handwohi))==4 and (max(handwohi)-min(handwohi))==3:
-                out=True
-                handinfo.discards=[maxcardpos]
-            #if we remove lowest, is it ost?    
-            elif len(set(handwolo))==4 and (max(handwolo)-min(handwolo))==3:
-                out=True
-                handinfo.discards=[mincardpos]    
-    return(out)
-
-def partial_w0_3tostraightflush(handinfo)->bool: #3 to straight flush
-    out=False
-    ranks=list(handinfo.countsuit.keys())
-    rankscount=list(handinfo.countsuit.values())
-    if 3 in rankscount: #is 3 to a flush? We alraeady check 4to flush so no need to eliminate
-        goodsuit=ranks[rankscount.index(3)]
-        temphand=[RANKLIST.index(rank) for rank,suit in handinfo.hand if suit==goodsuit]
-        if max(temphand)-min(temphand)<=4:#diff of 2=osf,3=isf 1 gap,4=isf 2 gap
-            out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if suit!=goodsuit]
-    return(out)
-
-def partial_w0_4toinsidestraight(handinfo)->bool:#4 to an inside straight
-    #Have previously checked outside straight
-    out=False
-    ranks=[RANKLIST.index(rank) for rank in handinfo.allrank]
-    # check if royal ist
-    if 'A' in handinfo.allrank and 'T' in handinfo.allrank and \
-      len((set(handinfo.allrank)-{'A','T'}).intersection(set(ROYAL)-{'A','T'}))==2:
-        out=True
-        handinfo.discards=[handinfo.allrank.index(list(set(handinfo.allrank).difference(set(ROYAL)))[0])]
-    else:    
-        mincardpos=ranks.index(min(ranks))
-        maxcardpos=ranks.index(max(ranks))
-        #outlier will be lower or higher than the rest
-        handwohi=ranks.copy()
-        del handwohi[maxcardpos]
-        handwolo=ranks.copy()
-        del handwolo[mincardpos]
-        if len(set(handwohi))==4:
-            #if we remove the highest, is it ost?
-            if max(handwohi)-min(handwohi)==4 \
-                and set(handwohi)!=set([0,2,3,4]): #and missing card is not wild
-                out=True
-                handinfo.discards=[maxcardpos]
-            #if we remove lowest, is it ost?    
-            elif max(handwolo)-min(handwolo)==4:
-                out=True
-                handinfo.discards=[mincardpos]    
-    return(out)
-
 ######
 #
 # wilds=1
