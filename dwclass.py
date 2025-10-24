@@ -31,6 +31,8 @@ class DWpokerinfo:
         self.wilds = (self.countrank).get(WILD, 0)
         # version of hand without wildcards
         self.nowildhand = [(rank, suit) for rank, suit in hand if rank != WILD]
+        #hand with only royals
+        self.onlyroyal=[(rank,suit) for rank,suit in self.nowildhand if rank in ROYAL]
         # list of ranks from non-wildcard hand
         self.nowildranks = [rank for rank, suit in hand if rank != WILD]
         # list of suits from non-wildcard hand
