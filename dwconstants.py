@@ -1,4 +1,4 @@
-TESTMODE=True #T=read hands from a file,F=generate randomly
+TESTMODE=False #T=read hands from a file,F=generate randomly
 DEBUG=False #Display variables at different times
 
 #global switches
