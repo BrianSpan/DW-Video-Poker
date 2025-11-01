@@ -110,8 +110,10 @@ def makehold(handinfo)->list[bool]:
             pass  #discards have already been calculated
         elif partial_w0_4offlush(handinfo):#4 FL
             pass  #discards have already been calculated
-        elif handinfo.handscore==TWOPAIR or handinfo.handscore==PAIRJACK or handinfo.handscore==PAIR:
-            pass  #discards have already been calculated
+        elif handinfo.handscore==TWOPAIR or handinfo.handscore==PAIR or handinfo.handscore==PAIRJACK:
+            #eliminate any that arent pair
+            #fullhouse and other related hands have been previously evaluated
+            handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if handinfo.nowildcountrank[rank]==1]
         elif partial_w0_4ofoutsidestraight(handinfo):#4 to an outside straight
             pass  #discards have already been calculated
         elif partial_w0_3ofstraightflush(handinfo): #3 to straight flush
@@ -123,29 +125,3 @@ def makehold(handinfo)->list[bool]:
         
     out=[not(cardindex in handinfo.discards) for cardindex in range(5)]    
     return(out)
-
-###########
-#
-# Helper function
-#
-##########
-def creatediscard( hand:list[tuple[str,str]], cond:callable)->list[int]:
-    """
-    Return list of dicard in order (0-based)
-    based on not fitting pattern
-    
-    Args:
-    hand:The original hand to choose from
-    condition: lambda function
-        Args: rank: rank of card
-              suit:suit of card
-        Output: True if discard      
-    Output:
-    list of positions (0-based) that can be discarded
-    """
-    #ex: creatediscards(handinfo.hand, lambda rank,suit: rank!=WILD and rank not in ROYAL)
-    #ex: hand.discards=creatediscards(handinfo.hand, lambda rank,suit: rank!=WILD and suit==badsuit)
-    out=[pos for pos,(rank,suit) in enumerate(hand) if cond(rank,suit)]
-    
-    return(out)    
-
