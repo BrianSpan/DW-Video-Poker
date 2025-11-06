@@ -2,6 +2,31 @@ from dwconstants import *
 from dwnamehands import *
 from collections import Counter
 
+###########
+#
+# Helper function
+#
+##########
+def creatediscard( hand:list[tuple[str,str]], cond:callable)->list[int]:
+    """
+    Return list of dicard in order (0-based)
+    based on not fitting pattern
+    
+    Args:
+    hand:The original hand to choose from
+    condition: lambda function
+        Args: rank: rank of card
+              suit:suit of card
+        Output: True if discard      
+    Output:
+    list of positions (0-based) that can be discarded
+    """
+    #ex: creatediscard(handinfo.hand, lambda rank,suit: rank!=WILD and rank not in ROYAL)
+    #ex: hand.discards=creatediscard(handinfo.hand, lambda rank,suit: rank!=WILD and suit==badsuit)
+    out=[pos for pos,(rank,suit) in enumerate(hand) if cond(rank,suit)]
+    
+    return(out)    
+
 ##########
 # Partial hand functions
 #
@@ -28,12 +53,12 @@ def partial_w0_4ofroyalflush(handinfo: "DWpokerinfo") -> bool:
     #case 1: 4 royals, all same suit, so outlier is discarded
     if len(handinfo.onlyroyal)==4 and len({suit for rank, suit in handinfo.onlyroyal}) == 1:
         out=True
-        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if rank not in ROYAL]
+        handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank not in ROYAL))
 
     #case 2: all royals and 4 are same, find the outlying suit           
     elif len(handinfo.onlyroyal)==5 and 4 in handinfo.countsuit.values():    
         badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-        handinfo.discards = [pos for pos,(rank,suit) in enumerate(handinfo.hand) if suit == badsuit]
+        handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (suit==badsuit))
         out=True
 
     return(out)
@@ -59,7 +84,7 @@ def partial_w0_3ofroyalflush(handinfo: "DWpokerinfo")->bool:
         temphand=[(rank,suit) for rank,suit in handinfo.hand if rank in ROYAL and suit==goodsuit]
         if len(temphand)==3:
             out=True
-            handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if (rank,suit) not in temphand]
+            handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: ((rank,suit) not in temphand))
     return(out)
 
 
@@ -86,7 +111,7 @@ def partial_w0_4ofstraightflush(handinfo: "DWpokerinfo")->bool: #Four-card strai
         #outside straight=span of 3,inside straight=span of 4
         if max(temphandnum)-min(temphandnum)<=4:
             out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if suit==badsuit]
+            handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (suit==badsuit))
     return(out)
 
 
@@ -115,7 +140,7 @@ def partial_w0_3ofstraightflush(handinfo:"DWpokerinfo")->bool: #3 to straight fl
         #span of 2=osf, span of 3=isf 1 gap,span of 4=isf 2 gap
         if max(temphandnum)-min(temphandnum)<=4:
             out=True
-            handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if suit!=goodsuit]
+            handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (suit!=goodsuit))
             
     return(out)
 
@@ -138,8 +163,7 @@ def partial_w0_4offlush(handinfo:"DWpokerinfo")->bool:
         out=True
         #find the outlier
         badsuit=next(suit for suit,count in handinfo.countsuit.items() if count==1)
-        handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if suit==badsuit]
-        #handinfo.discards=[handinfo.hand.index((rank,suit)) for rank,suit in handinfo.hand if suit==badsuit]
+        handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (suit==badsuit))
     return(out)
 
 
@@ -166,11 +190,10 @@ def partial_w0_4ofoutsidestraight(handinfo:"DWpokerinfo")->bool:
         #if we consider A to be low, hand wild have '2' which is wild and this will have 0 wilds
         if 'A' in handinfo.allrank:
             #make sure we only look for royals
-            temphand=[rank for rank in handinfo.allrank if rank in ROYAL]
             #if we have royals except T
-            if len(temphand)==4 and not('T' in temphand):
-                #handinfo.discards=[handinfo.allrank.index(list(set(handinfo.allrank)-set(ROYAL))[0])]
-                handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand) if rank not in ROYAL]
+            #if len(handinfo.onlyroyal)==4 and not('T' in [rank for (rank,suit) in handinfo.onlyroyal]):
+            if len(handinfo.onlyroyal)==4 and not('T' in handinfo.allrank):
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank not in ROYAL))
                 return True
         #General Case: no A in hand         
         else:
@@ -241,7 +264,7 @@ def partial_w0_4ofinsidestraight(handinfo:"DWpokerinfo")->bool:
             
             #Case 2: outlier will be lower
             mincardpos=tempranknum.index(min(tempranknum))
-            handwolo=[rank for pos,rank in enumerate(ranknumlist) if pos!=mincardpos]
+            handwolo=[rank for pos,rank in enumerate(tempranknum) if pos!=mincardpos]
             if (max(handwolo)-min(handwolo))==4:
                 handinfo.discards=[mincardpos]
                 return True
@@ -271,11 +294,10 @@ def partial_w1_4ofroyalflush(handinfo: "DWpokerinfo")->bool:#1 wild, all the sui
         countroyal=len(handinfo.onlyroyal)
         #Case 1: if 3 Royals, remove unrelated and verify all are suited
         if countroyal==3:
-            royalssuits=[suit for (rank,suit) in handinfo.onlyroyal]
-            if len(set(royalssuits))==1:
+            #royalssuits=[suit for (rank,suit) in handinfo.onlyroyal]
+            if len(set([suit for (rank,suit) in handinfo.onlyroyal]))==1:
                 out=True
-                handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand)
-                                   if rank!=WILD and not(rank in ROYAL)]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and not(rank in ROYAL)))
         #Case 2: if 4 Royals, unrelated is Royal but different suit
         elif countroyal==4:
             #find which is non-matching suit
@@ -283,9 +305,7 @@ def partial_w1_4ofroyalflush(handinfo: "DWpokerinfo")->bool:#1 wild, all the sui
             goodsuit=next((suit for suit,cnt in suitcount.items() if cnt==3),None)
             if goodsuit!=None:
                 out=True
-                handinfo.discards=[pos for pos,(rank,suit)
-                                   in enumerate(handinfo.hand)
-                                   if rank!=WILD and suit!=goodsuit]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit))
     return(out)    
 
 
@@ -316,11 +336,7 @@ def partial_w1_3ofroyalflush(handinfo)->bool: #13. 3 WRF
             #need exactly 2 royals, different, same suit
             if len(smallhand)==2:
                 out=True
-                handinfo.discards=[pos for pos,(rank,suit) in enumerate(handinfo.hand)
-                                   if rank!=WILD and
-                                   (suit!=goodsuit or
-                                    rank not in ROYAL)    
-                                   ]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (suit!=goodsuit or rank not in ROYAL))
     return(out)
 
 
@@ -358,9 +374,7 @@ def partial_w1_4ofoutsidestraightflush(handinfo:"DWpokerinfo")->bool:
                and minrank>=RANKLIST.index('5'):
                 #find the outlier
                 out=True
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                                   for rank,suit in handinfo.hand
-                                   if rank!=WILD and suit!=goodsuit] 
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit))
     return(out)
 
 
@@ -398,9 +412,7 @@ def partial_w1_4ofinsidestraightflush(handinfo:"DWpokerinfo")->bool:
                and minrank>=RANKLIST.index('5'):
                 #find the outlier
                 out=True
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                                   for rank,suit in handinfo.hand
-                                   if rank!=WILD and suit!=goodsuit] 
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit))
     return(out)
 
 
@@ -433,9 +445,7 @@ def partial_w1_3ofstraightflush(handinfo:"DWpokerinfo")->bool:
             #consecutive
             if max(ranks)-min(ranks)==1:
                 out=True
-                handinfo.discards=[handinfo.hand.index((rank,suit))
-                                   for rank,suit in handinfo.hand
-                                   if rank!=WILD and suit!=goodsuit]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit))
                 break
     #Case 2: 1 of the "extra" cards is same suit
     #we eliminate a non-consecutive
@@ -451,18 +461,12 @@ def partial_w1_3ofstraightflush(handinfo:"DWpokerinfo")->bool:
         if tempranksorted[0]==tempranksorted[1]-1:
             badvalue=tempranksorted[2]
             out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit))
-                               for rank,suit in handinfo.hand
-                               if (rank!=WILD and suit!=goodsuit)
-                               or rank==RANKLIST[badvalue]]
+            handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit) or (rank==RANKLIST[badvalue]))
         #case 2b: outlier is smallest
         elif tempranksorted[1]==tempranksorted[2]-1:
             badvalue=tempranksorted[0]
             out=True
-            handinfo.discards=[handinfo.hand.index((rank,suit))
-                               for rank,suit in handinfo.hand
-                               if (rank!=WILD and suit!=goodsuit)
-                               or rank==RANKLIST[badvalue]]
+            handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit) or (rank==RANKLIST[badvalue]))
         #case 2C: there are no consecutive
         #pass
     return(out)
@@ -495,11 +499,7 @@ def partial_w2_4ofwildroyalflush(handinfo: "DWpokerinfo")->bool:
                 goodsuit=next(iter(countsuit))
                 #... it's the match we're looking for
                 out=True
-                handinfo.discards=[cardpos
-                                   for cardpos, (rank, suit) in enumerate(handinfo.hand)
-                                   if rank != WILD
-                                   and suit!=goodsuit
-                                   and not rank in ROYAL]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit and not rank in ROYAL))
         # Case 2: Exactly 3 royals, 2 in suit and 1 outlier
         elif len(handinfo.onlyroyal)==3: #if 3 royals, then how many suits?
             countsuit = Counter(suit for rank,suit in handinfo.onlyroyal)
@@ -507,11 +507,7 @@ def partial_w2_4ofwildroyalflush(handinfo: "DWpokerinfo")->bool:
                 out=True
                 #find the outlier
                 goodsuit=next(suit for suit,count in countsuit.items() if count==2)
-                handinfo.discards=[cardpos
-                                   for cardpos, (rank, suit) in enumerate(handinfo.hand)
-                                   if rank != WILD
-                                   and suit!= goodsuit
-                                   ]
+                handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit!=goodsuit))
     return(out)
 
 
@@ -542,7 +538,5 @@ def partial_w2_4ofstraightflushexcept(handinfo:"DWpokerinfo")->bool:
                 if min(temphand)>=RANKLIST.index('6'):
                 #6-7 or higher
                     out=True
-                    handinfo.discards=[cardpos
-                                       for cardpos, (rank, suit) in enumerate(handinfo.hand)
-                                       if suit==badsuit and rank!=WILD]    
+                    handinfo.discards=creatediscard(handinfo.hand, lambda rank,suit: (rank!=WILD and suit==badsuit))
     return(out)    

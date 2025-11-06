@@ -25,7 +25,7 @@ for round in range(rounds):
         #get initial hand
         numberlist,playerhand=deal()
         handinfo=DWpokerinfo(playerhand)
-
+   
         #display bet
         currpot-=BET
         sout="Round: {} Turn: {} Wagering: ${} New total: ${}"
@@ -76,7 +76,7 @@ totalrolls=0
 total_pot=0
 pot_number=1
 for rolls,amount in results:
-    print('Pot: ', str(pot_number),'\nNumber of rolls: ',str(rolls),'\nAmount: $',str(amount),'\n')
+    print('Pot: ', str(pot_number),'. Number of rolls: ',str(rolls),'. Amount: $',str(amount))
     pot_number+=1
 print('Total rolls: ',sum(rolls for rolls,amount in results))    
 print('Total take: $',sum(amount for rolls,amount in results))     
